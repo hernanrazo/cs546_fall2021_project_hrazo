@@ -66,8 +66,10 @@ test.txt
 *.swp
 *.swo
 
+data/
+
 # python 
 .DS_Store
 __pycache__/
 ml/data/
-saved_models/
+ml/saved_models/
