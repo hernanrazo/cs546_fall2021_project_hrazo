@@ -23,7 +23,7 @@ bool ZSTDclient::compress(SOURCE_TYPE source, size_t source_size, DESTINATION_TY
 	//Compress
 	ret = ZSTD_compress((void* const)destination, destination_size, (void* const)source, source_size, level);
 	if(ret != 0){
-		std::cout << "Error in ZSTD Compression, @ compress2()!" << std::endl;
+		std::cout << "Error in ZSTD Compression, @ ZSTD_compress()!" << std::endl;
 		return false;
 	}
 
@@ -51,7 +51,7 @@ bool ZSTDclient::decompress(SOURCE_TYPE source, size_t source_size, DESTINATION_
 	//Decompress
 	ret = ZSTD_decompress((void* const)destination, destination_size, (void* const)source, source_size);
 	if(ret != 0){
-		std::cout << "Error in ZLIB Decompression, @ uncompress2()!" << std::endl;
+		std::cout << "Error in ZSTD Decompression, @ ZSTD_decompress()!" << std::endl;
 		free(destination);
 		destination = nullptr;
 		return false;

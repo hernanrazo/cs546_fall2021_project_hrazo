@@ -1,3 +1,6 @@
+#ifndef LIBCLIENT_H
+#define LIBCLIENT_H
+
 #include <iostream>
 #include "time_counter.h"
 #include "data_structure.h"
@@ -44,3 +47,4 @@ class LibClient
 	protected:
 		TimeCounter timer;
 };
+#endif

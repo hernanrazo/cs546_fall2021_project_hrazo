@@ -1,130 +1,90 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+#include <torch/script.h>
+#include "include/zlib_client.h"
+#include "include/lzo_client.h"
+#include "include/zstd_client.h"
 
+extern "C" {
 #include "lzo/lzo1x.h"
 #include "lzo/lzoconf.h"
 #include "lzo/lzodefs.h"
 #include "zlib.h"
-#include <zstd.h>
-#include <torch/script.h>
-
-using namespace std;
-
-
-#define CHUNK 16384
-
-// function prototypes
-void zerr(int ret);
-int zlib_compress(FILE *source, FILE *dest, int level);
-
-
-// report zlib errors
-void zerr(int ret) {
-
-    fputs("zpipe: ", stderr);
-    switch (ret) {
-    case Z_ERRNO:
-        if (ferror(stdin))
-            fputs("error reading stdin\n", stderr);
-        if (ferror(stdout))
-            fputs("error writing stdout\n", stderr);
-        break;
-    case Z_STREAM_ERROR:
-        fputs("invalid compression level\n", stderr);
-        break;
-    case Z_DATA_ERROR:
-        fputs("invalid or incomplete deflate data\n", stderr);
-        break;
-    case Z_MEM_ERROR:
-        fputs("out of memory\n", stderr);
-        break;
-    case Z_VERSION_ERROR:
-        fputs("zlib version mismatch!\n", stderr);
-    }
+#include "zstd.h"
 }
 
 
-int zlib_compress(FILE *source, FILE *dest, int level) {
-	int ret; // return codes
-	int flush; // keep ttrack of current flushing state for deflate()
-	unsigned have; // amount of data returned from deflate()
-	z_stream strm; // pass info to and from zlib
-	unsigned char in[CHUNK]; // input buffer
-	unsigned char out[CHUNK]; // output buffer
+int main(int argc, char *argv[]) {
 
-	// allocate deflate state
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-
-	// check return value of deflateInit() to make sure that it was able to allocate memory for 
-	// the internal state. Also check that if argument is valid.
-	ret = deflateInit(&strm, level);
-
-	if (ret != Z_OK) {
-		return ret;
+	if (argc < 2) {
+		std::cout << "No directory argument given" << std::endl;
+		std::cout << "Usage: ./main <directory with data files>" << std::endl;
+		return(-1);
 	}
 
-	// read the input file
-	do {
-		// grab numberof bytes
-		strm.avail_in = fread(in, 1, CHUNK, source);
-
-		// check for errors reading input file
-		if (ferror(source)) {
-			(void)deflateEnd(&strm);
-			return Z_ERRNO;
-		}
-		// check for end of file and check for last compressable byte
-		flush = feof(source) ? Z_FINISH : Z_NO_FLUSH;
-
-		// place pointer to read bytes into next_in
-		strm.next_in = in;
-
-		do {
-			// run deflate() on input until output buffer not full.
-			// finish compression if all of the source has been read.
-			strm.avail_out = CHUNK;
-			strm.next_out = out;
-
-			// actually compress the file,
-			// asserting that the state is not clobbered.
-			ret = deflate(&strm, flush);
-			assert(ret != Z_STREAM_ERROR);
-
-			// calculate how much output was provided on the last call
-			have = CHUNK - strm.avail_out;
-
-			// write data to output file
-			if (fwrite(out, 1, have, dest) != have || ferror(dest)) {
-				(void)deflateEnd(&strm);
-				return Z_ERRNO;
-			} 
-		} while (strm.avail_out == 0);
-		assert(strm.avail_in == 0);
+	std::string dir_path = argv[1];
 	
-	} while (flush != Z_FINISH);
-	assert(ret == Z_STREAM_END);
+	ZLIBclient zlib;
+	LZOclient lzo;
+	ZSTDclient zstd;
+	
+	long begin = 0;
+	long end = 0;
+	size_t source_size = 0;
+	void* source;
 
-	(void)deflateEnd(&strm);
-	return Z_OK; // finished compressing
-}
+	size_t destination_size = 0;
+	void* destination;
 
+	// file stream for final csv
+	std::ofstream outfile ("data.csv");
 
+	// traverse files in dataset
+	if (std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)) {
+		try {
+			for(const auto& entry : std::filesystem::recursive_directory_iterator(dir_path)) {
+				if (std::filesystem::is_regular_file(entry.status())) {
+				
+					// get needed values for each compression/decompression
+					std::ifstream stream (entry.path().c_str());
 
-// main function where everything gets implemented
-int main(int argc, char **argv) {
+					if (!stream) {
+						std::cout << "Could not open file stream" << std::endl;
+						continue;
+					}
 
-	int ret;
+					std::cout << "Currently on file: " << entry.path().c_str() << std::endl;
 
-    	// do compression if no arguments
-    	if (argc == 1) {
-		ret = zlib_compress(stdin, stdout, Z_DEFAULT_COMPRESSION);
-		if (ret != Z_OK)
-	    	zerr(ret);
-		return ret;
-    	}
-    	cout << "done compressing" << endl;
+					// get source size
+					begin = stream.tellg();
+					stream.seekg(0, std::ios::end);
+					end = stream.tellg();
+					source_size = (end - begin);
+
+					// get source buffer
+					source = std::malloc(source_size);
+
+					// compress
+					zlib.compress(source, source_size, destination, destination_size);
+					//lzo.compress(source, source_size, source, source_size);
+					//zstd.compress(source, source_size, source, source_size);
+
+					// decompress
+					//zlib.decompress(source, source_size, source, source_size);
+					//lzo.decompress(source, source_size, source, source_size);
+					//zstd.decompress(source, source_size, source, source_size);
+					
+					stream.close();
+					outfile << "test" << std::endl;
+				}
+			}
+		} catch(std::filesystem::filesystem_error const& ex){}
+	}
+	outfile.close();
+	std::cout << "Data collection complete" << std::endl;
+	return(0);
 }

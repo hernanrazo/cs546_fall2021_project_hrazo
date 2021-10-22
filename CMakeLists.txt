@@ -14,10 +14,10 @@ include_directories(${CMAKE_BINARY_DIR}/lib/lzo-2.10)
 include_directories(${CMAKE_BINARY_DIR}/lib/zstd-1.0.0)
 
 add_executable(main main.cpp
-	include/timer.h
 	zlib_client.cpp
 	lzo_client.cpp
 	zstd_client.cpp
+	include/timer.h
 	include/zlib_client.h
 	include/lzo_client.h
 	include/zstd_client.h)

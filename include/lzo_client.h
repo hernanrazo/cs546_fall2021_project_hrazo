@@ -1,3 +1,6 @@
+#ifndef LZOCLIENT_H
+#define LZOCLIENT_H
+
 #include "lib_client.h"
 
 class LZOclient: public LibClient
@@ -7,3 +10,4 @@ class LZOclient: public LibClient
 		bool compress(SOURCE_TYPE, size_t, DESTINATION_TYPE , size_t&) override;
 		bool decompress(SOURCE_TYPE, size_t, DESTINATION_TYPE, size_t&) override;
 };
+#endif

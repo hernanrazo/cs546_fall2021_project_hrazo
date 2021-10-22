@@ -5,8 +5,8 @@
 
 enum class CompressionLibrary //"lib_choice" argument
 {
-	/* 0     1     2      3     */
-	DUMMY, ZLIB, LZO, DYNAMIC //MAKE DYNAMIC THE LAST OPTION DUE TO ITERATORS!!!
+	/* 0     1    2     3      4 */
+	DUMMY, ZLIB, LZO, ZSTD, DYNAMIC //MAKE DYNAMIC THE LAST OPTION DUE TO ITERATORS!!!
 };
 
 
