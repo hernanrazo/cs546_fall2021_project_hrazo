@@ -17,7 +17,8 @@ add_executable(main main.cpp
 	zlib_client.cpp
 	lzo_client.cpp
 	zstd_client.cpp
-	include/timer.h
+	include/time_counter.h
+	include/csvfile.h
 	include/zlib_client.h
 	include/lzo_client.h
 	include/zstd_client.h)

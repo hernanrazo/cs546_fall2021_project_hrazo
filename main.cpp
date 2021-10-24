@@ -5,6 +5,8 @@
 #include <fstream>
 #include <filesystem>
 #include <torch/script.h>
+#include "include/time_counter.h"
+#include "include/csvfile.h"
 #include "include/zlib_client.h"
 #include "include/lzo_client.h"
 #include "include/zstd_client.h"
@@ -17,8 +19,20 @@ extern "C" {
 #include "zstd.h"
 }
 
+/*
+ * Compress and decompress each file using each compression library.
+ * Write resulting information to a csv file. This includes:
+ * 1) the file path
+ * 2) file size
+ * 3) size of source buffer
+ * 4) size of destination buffer
+ * 5) time taken to compress/decompress
+ * 6) compression/decompression label
+ * 7) name of the library used
+ */
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
 	if (argc < 2) {
 		std::cout << "No directory argument given" << std::endl;
@@ -31,60 +45,85 @@ int main(int argc, char *argv[]) {
 	ZLIBclient zlib;
 	LZOclient lzo;
 	ZSTDclient zstd;
+	TimeCounter timer;
 	
 	long begin = 0;
 	long end = 0;
+	int file_size = 0;
+	size_t buf_size = 0;
 	size_t source_size = 0;
-	void* source;
-
 	size_t destination_size = 0;
+	void* source;
 	void* destination;
 
 	// file stream for final csv
-	std::ofstream outfile ("data.csv");
+	csvfile csv("data.csv");
 
-	// traverse files in dataset
+	// traverse files in dir_path
 	if (std::filesystem::exists(dir_path) && std::filesystem::is_directory(dir_path)) {
 		try {
 			for(const auto& entry : std::filesystem::recursive_directory_iterator(dir_path)) {
 				if (std::filesystem::is_regular_file(entry.status())) {
 				
-					// get needed values for each compression/decompression
-					std::ifstream stream (entry.path().c_str());
+					// open a stream for the current file
+					std::ifstream file (entry.path().c_str(), std::ios::binary);
 
-					if (!stream) {
+					if (!file) {
 						std::cout << "Could not open file stream" << std::endl;
 						continue;
 					}
 
 					std::cout << "Currently on file: " << entry.path().c_str() << std::endl;
 
-					// get source size
-					begin = stream.tellg();
-					stream.seekg(0, std::ios::end);
-					end = stream.tellg();
-					source_size = (end - begin);
+					// get size of current file in bytes
+					file.seekg(0, std::ifstream::end);
+					file_size = file.tellg();
 
-					// get source buffer
-					source = std::malloc(source_size);
+					// malloc buffers
+					buf_size = zlib.est_compressed_size(file_size);
+					source = std::malloc(buf_size);
+					destination = std::malloc(buf_size);
 
-					// compress
+					// populate source buffer with contents of current file
+					std::vector<char> tempBuf(buf_size);
+
+					if (file.read(tempBuf.data(), sizeof(tempBuf))) {
+						memcpy(source, tempBuf, sizeof(source));
+					}
+			
+
+					timer.start();
 					zlib.compress(source, source_size, destination, destination_size);
-					//lzo.compress(source, source_size, source, source_size);
-					//zstd.compress(source, source_size, source, source_size);
-
-					// decompress
-					//zlib.decompress(source, source_size, source, source_size);
-					//lzo.decompress(source, source_size, source, source_size);
-					//zstd.decompress(source, source_size, source, source_size);
+					timer.stop();
+					csv << entry.path().c_str()
+					    << file_size
+					    << sizeof(source)
+					    << sizeof(destination)
+					    << timer.get_duration_msec() 
+					    << "compression"
+					    << "zlib"
+					    << endrow;
 					
-					stream.close();
-					outfile << "test" << std::endl;
+					timer.start();
+					zlib.decompress(source, source_size, destination, destination_size);
+					timer.stop();
+					csv << entry.path().c_str()
+					    << file_size
+					    << sizeof(source)
+					    << sizeof(destination)
+					    << timer.get_duration_msec() 
+					    << "decompression"
+					    << "zlib"
+					    << endrow;
+
+					//free(buf_size);
+					free(source);
+					free(destination);
+					file.close();
 				}
 			}
 		} catch(std::filesystem::filesystem_error const& ex){}
 	}
-	outfile.close();
 	std::cout << "Data collection complete" << std::endl;
 	return(0);
 }

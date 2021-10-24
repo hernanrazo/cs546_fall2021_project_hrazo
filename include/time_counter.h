@@ -1,3 +1,6 @@
+#ifndef TIME_COUNTER_H
+#define TIME_COUNTER_H
+
 #include <chrono>
 
 class TimeCounter
@@ -32,3 +35,4 @@ class TimeCounter
 		std::chrono::system_clock::time_point begin;
 		std::chrono::system_clock::time_point end;
 };
+#endif
