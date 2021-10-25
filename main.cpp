@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 						exit(1);
 					}
 
-					fptr = fopen(entry.path().c_str(), "r");
+					fptr = fopen(entry.path().c_str(), "rb");
 
 					if (!fptr) {
 						std::cout << "Could not open file" << std::endl;
@@ -94,8 +94,11 @@ int main(int argc, char *argv[])
 					destination = std::malloc(buf_size+1);
 
 					// populate source buffer with contents of current file
-					fwrite(source, sizeof(source), 1, fptr);
-					//std::cout << sizeof(source) << std::endl;
+					//memcpy(source, fptr, file_size);
+					fread(source, file_size, 1, fptr);
+					
+					
+					std::cout << sizeof(source) << std::endl;
 
 					// zlib compress
 					timer.start();
