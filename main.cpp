@@ -66,13 +66,6 @@ int main(int argc, char *argv[])
 			for(const auto& entry : std::filesystem::recursive_directory_iterator(dir_path)) {
 				if (std::filesystem::is_regular_file(entry.status())) {
 				
-					// open a stream for the current file
-					std::ifstream stream;
-
-					if (!stream) {
-						std::cout << "Could not open stream" << std::endl;
-						exit(1);
-					}
 
 					fptr = fopen(entry.path().c_str(), "rb");
 
@@ -133,7 +126,6 @@ int main(int argc, char *argv[])
 
 					//close current file when complete
 					fclose(fptr);
-					stream.close();
 				}
 			}
 		} catch(std::filesystem::filesystem_error const& ex){}
