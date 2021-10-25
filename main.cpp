@@ -47,6 +47,7 @@ int main(int argc, char *argv[])
 	ZSTDclient zstd;
 	TimeCounter timer;
 	
+	FILE *fptr;
 	long begin = 0;
 	long end = 0;
 	int file_size = 0;
@@ -66,32 +67,37 @@ int main(int argc, char *argv[])
 				if (std::filesystem::is_regular_file(entry.status())) {
 				
 					// open a stream for the current file
-					std::ifstream file (entry.path().c_str(), std::ios::binary);
+					std::ifstream stream;
 
-					if (!file) {
-						std::cout << "Could not open file stream" << std::endl;
-						continue;
+					if (!stream) {
+						std::cout << "Could not open stream" << std::endl;
+						exit(1);
+					}
+
+					fptr = fopen(entry.path().c_str(), "r");
+
+					if (!fptr) {
+						std::cout << "Could not open file" << std::endl;
+						exit(1);
 					}
 
 					std::cout << "Currently on file: " << entry.path().c_str() << std::endl;
 
 					// get size of current file in bytes
-					file.seekg(0, std::ifstream::end);
-					file_size = file.tellg();
+					fseek(fptr, 0L, SEEK_END);
+					file_size = ftell(fptr);
+					fseek(fptr, 0L, SEEK_SET);
 
 					// malloc buffers
 					buf_size = zlib.est_compressed_size(file_size);
-					source = std::malloc(buf_size);
-					destination = std::malloc(buf_size);
+					source = std::malloc(buf_size+1);
+					destination = std::malloc(buf_size+1);
 
 					// populate source buffer with contents of current file
-					std::vector<char> tempBuf(buf_size);
+					fwrite(source, sizeof(source), 1, fptr);
+					//std::cout << sizeof(source) << std::endl;
 
-					if (file.read(tempBuf.data(), sizeof(tempBuf))) {
-						memcpy(source, tempBuf, sizeof(source));
-					}
-			
-
+					// zlib compress
 					timer.start();
 					zlib.compress(source, source_size, destination, destination_size);
 					timer.stop();
@@ -104,6 +110,7 @@ int main(int argc, char *argv[])
 					    << "zlib"
 					    << endrow;
 					
+					// zlib decompress
 					timer.start();
 					zlib.decompress(source, source_size, destination, destination_size);
 					timer.stop();
@@ -115,11 +122,15 @@ int main(int argc, char *argv[])
 					    << "decompression"
 					    << "zlib"
 					    << endrow;
-
-					//free(buf_size);
+					
+					// reset buffer and free memory for next compression library
+					buf_size = 0;
 					free(source);
 					free(destination);
-					file.close();
+
+					//close current file when complete
+					fclose(fptr);
+					stream.close();
 				}
 			}
 		} catch(std::filesystem::filesystem_error const& ex){}
