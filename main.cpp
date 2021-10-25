@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
 					// populate source buffer with contents of current file
 					//memcpy(source, fptr, file_size);
-					fread(source, file_size, 1, fptr);
+					fwrite(source, file_size, sizeof(source), fptr);
 					
 					
 					std::cout << sizeof(source) << std::endl;
