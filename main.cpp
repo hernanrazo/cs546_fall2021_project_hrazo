@@ -4,7 +4,6 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include <torch/script.h>
 #include "include/time_counter.h"
 #include "include/csvfile.h"
 #include "include/zlib_client.h"
@@ -33,7 +32,6 @@ extern "C" {
 
 int main(int argc, char *argv[])
 {
-
 	if (argc < 2) {
 		std::cout << "No directory argument given" << std::endl;
 		std::cout << "Usage: ./main <directory with data files>" << std::endl;
@@ -41,17 +39,15 @@ int main(int argc, char *argv[])
 	}
 
 	std::string dir_path = argv[1];
-	
+
 	ZLIBclient zlib;
 	LZOclient lzo;
 	ZSTDclient zstd;
 	TimeCounter timer;
-	
+
 	FILE *fptr;
 	long begin = 0;
 	long end = 0;
-	int file_size = 0;
-	size_t buf_size = 0;
 	size_t source_size = 0;
 	size_t destination_size = 0;
 	void* source;
@@ -65,7 +61,6 @@ int main(int argc, char *argv[])
 		try {
 			for(const auto& entry : std::filesystem::recursive_directory_iterator(dir_path)) {
 				if (std::filesystem::is_regular_file(entry.status())) {
-				
 
 					fptr = fopen(entry.path().c_str(), "rb");
 
@@ -78,53 +73,115 @@ int main(int argc, char *argv[])
 
 					// get size of current file in bytes
 					fseek(fptr, 0L, SEEK_END);
-					file_size = ftell(fptr);
+					source_size = ftell(fptr);
 					fseek(fptr, 0L, SEEK_SET);
 
-					// malloc buffers
-					buf_size = zlib.est_compressed_size(file_size);
-					source = std::malloc(buf_size+1);
-					destination = std::malloc(buf_size+1);
+					// malloc buffers for zlib
+					destination_size = zlib.est_compressed_size(source_size);
+					source = std::malloc(source_size);
+					destination = std::malloc(destination_size);
 
-					// populate source buffer with contents of current file
-					//memcpy(source, fptr, file_size);
-					fwrite(source, file_size, sizeof(source), fptr);
-					
-					
-					std::cout << sizeof(source) << std::endl;
+					// read file pointer to the source buffer
+					fread(source, source_size, 1, fptr);
 
 					// zlib compress
 					timer.start();
 					zlib.compress(source, source_size, destination, destination_size);
 					timer.stop();
 					csv << entry.path().c_str()
-					    << file_size
-					    << sizeof(source)
-					    << sizeof(destination)
-					    << timer.get_duration_msec() 
-					    << "compression"
-					    << "zlib"
-					    << endrow;
-					
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "compression"
+						<< "zlib"
+						<< endrow;
+
 					// zlib decompress
 					timer.start();
-					zlib.decompress(source, source_size, destination, destination_size);
+					zlib.decompress(destination, destination_size, source, source_size);
 					timer.stop();
 					csv << entry.path().c_str()
-					    << file_size
-					    << sizeof(source)
-					    << sizeof(destination)
-					    << timer.get_duration_msec() 
-					    << "decompression"
-					    << "zlib"
-					    << endrow;
-					
-					// reset buffer and free memory for next compression library
-					buf_size = 0;
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "decompression"
+						<< "zlib"
+						<< endrow;
+
 					free(source);
 					free(destination);
 
-					//close current file when complete
+
+					// malloc buffers for lzo
+					destination_size = lzo.est_compressed_size(source_size);
+					source = std::malloc(source_size);
+					destination = std::malloc(destination_size);
+
+					// read file pointer to the source buffer
+					fread(source, source_size, 1, fptr);
+
+					// lzo compress
+					timer.start();
+					lzo.compress(source, source_size, destination, destination_size);
+					timer.stop();
+					csv << entry.path().c_str()
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "compression"
+						<< "lzo"
+						<< endrow;
+
+					// lzo decompress
+					timer.start();
+					lzo.decompress(destination, destination_size, source, source_size);
+					timer.stop();
+					csv << entry.path().c_str()
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "decompression"
+						<< "lzo"
+						<< endrow;
+					
+					free(source);
+					free(destination);
+					
+
+					// malloc buffers for zstd
+					destination_size = zstd.est_compressed_size(source_size);
+					source = std::malloc(source_size);
+					destination = std::malloc(destination_size);
+
+					// read file pointer to the source buffer
+					fread(source, source_size, 1, fptr);
+
+					// zstd compress
+					timer.start();
+					zstd.compress(source, source_size, destination, destination_size);
+					timer.stop();
+					csv << entry.path().c_str()
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "compression"
+						<< "zstd"
+						<< endrow;
+
+					// zstd decompress
+					timer.start();
+					zstd.decompress(destination, destination_size, source, source_size);
+					timer.stop();
+					csv << entry.path().c_str()
+						<< source_size
+						<< destination_size
+						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< "decompression"
+						<< "zstd"
+						<< endrow;
+					
+					free(source);
+					free(destination);
 					fclose(fptr);
 				}
 			}
