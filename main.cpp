@@ -25,9 +25,10 @@ extern "C" {
  * 2) file size
  * 3) size of source buffer
  * 4) size of destination buffer
- * 5) time taken to compress/decompress
- * 6) compression/decompression label
- * 7) name of the library used
+ * 5) time taken to compress in seconds (if applicable)
+ * 6) time taken to decompress in seconds (if applicable)
+ * 7) compression/decompression label
+ * 8) name of the library used
  */
 
 int main(int argc, char *argv[])
@@ -91,7 +92,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< timer.get_duration_sec()
+						<< 0
 						<< "compression"
 						<< "zlib"
 						<< endrow;
@@ -103,7 +105,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< 0
+						<< timer.get_duration_sec() 
 						<< "decompression"
 						<< "zlib"
 						<< endrow;
@@ -127,7 +130,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< timer.get_duration_sec()
+						<< 0
 						<< "compression"
 						<< "lzo"
 						<< endrow;
@@ -139,7 +143,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< 0
+						<< timer.get_duration_sec() 
 						<< "decompression"
 						<< "lzo"
 						<< endrow;
@@ -163,7 +168,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< timer.get_duration_sec() 
+						<< 0
 						<< "compression"
 						<< "zstd"
 						<< endrow;
@@ -175,7 +181,8 @@ int main(int argc, char *argv[])
 					csv << entry.path().c_str()
 						<< source_size
 						<< destination_size
-						<< (source_size * 0.000001) / timer.get_duration_sec() 
+						<< 0
+						<< timer.get_duration_sec() 
 						<< "decompression"
 						<< "zstd"
 						<< endrow;

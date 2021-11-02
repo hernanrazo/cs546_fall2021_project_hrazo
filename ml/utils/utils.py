@@ -1,7 +1,6 @@
 import os
 import random
 import numpy as np
-import torch
 
 root_dir = str(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
 

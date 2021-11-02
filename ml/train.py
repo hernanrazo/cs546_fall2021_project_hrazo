@@ -4,108 +4,70 @@ import warnings
 import logging
 import time
 from datetime import date
+import pickle
+from sklearn_porter import Porter
 import pandas as pd
-import torch.optim
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from dataset import dataset
-from model import lin_reg
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
 sys.path.append('../')
-from utils.utils import create_dir, get_accuracy
+from utils.utils import create_dir
 
 warnings.filterwarnings('ignore', category=UserWarning)
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 root_dir = str(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
-epochs = 70
-batch_size = 32
-lr = 0.005
-workers = 4
 
 def main():
 
     # create new directory for the current training session
     today = date.today()
     today = str(today.strftime('%m-%d-%Y'))
-    dir_ = str(root_dir + '/saved_models/linreg-' + today)
+    dir_ = str(root_dir + '/saved_models/dtc-' + today)
 
     create_dir(dir_)
 
-    log_file_name = 'linreg-' + today +'.log'
-    logging.basicConfig(filename=os.path.join(dir_, log_file_name),
-                        filemode='w',
-                        format='%(asctime)s: %(message)s',
-                        level=logging.INFO)
-
     # get training set
-    data_path = str(root_dir + '/data/train.csv')
+    data_path = str(root_dir + '/build/data.csv')
     df = pd.read_csv(data_path, header=None)
     
-    # encode labels
-    encode = {'zstd' : 0, 'lzo' : 1, 'zlib' : 2}
-    df.iloc[:, 195].replace(encode, inplace=True)
+    # remove all time entries
+    df = df.drop(columns=[3, 4])
+    
+    # clean filenames to only the extensions (file types)
+    df.iloc[:, 0] = df.iloc[:, 0].apply(lambda x: x.split('.')[-1])
+    encode = {'txt' : 0, 'jpg' : 1, 'h5' : 2, 'pdf' : 3, 'PDF' : 3}
+    df.iloc[:, 0].replace(encode, inplace=True)
 
-    # remove file names
-    df.drop(df.columns[0], axis=1, inplace=True)
+    # encode operation labels
+    encode = {'compression' : 0, 'decompression' : 1}
+    df.iloc[:, 3].replace(encode, inplace=True)
+
+    # encode library labels
+    encode = {'zstd' : 0, 'lzo' : 1, 'zlib' : 2}
+    df.iloc[:, 4].replace(encode, inplace=True)
 
     # seperate data and labels
-    x = df.iloc[:, 0: -1]
-    y = df.iloc[:, -1]
+    x = df.iloc[:, : -1]
+    y = df.iloc[:, -1:]
+
+    # split training and testing data
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=0, shuffle=True)
+
+    # train decision tree classifier
+    dtree_model = DecisionTreeClassifier(max_depth = 2).fit(x_train, y_train)
+    dtree_predictions = dtree_model.predict(x_test)
+
+    # print resulting confusion matrix and classification report
+    print(confusion_matrix(y_test, dtree_predictions))
+    print(classification_report(y_test, dtree_predictions))
+
+    # save python model
+    pickle.dump(dtree_model, open(dir_ + '/dtc-python.sav', 'wb'))
+
+    # transpile C version for model using porter
+    porter = Porter(dtree_model, language='C')
+    output = porter.export(embed_data=True)
     
-    # get dataloader for training
-    train_data = dataset(torch.FloatTensor(x.values), torch.FloatTensor(y.values))
-    train_loader = DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True)
-    
-    model = lin_reg()
-    model = model.to(device)
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=0.1)
-
-    # for each epoch
-    for epoch in range(epochs):
-
-        model.train()
-        epoch_loss = 0
-        epoch_accuracy = 0
-        epoch_steps = 0
-
-        for i, (x, y) in enumerate(train_loader):
-
-            x, y = x.to(device), y.to(device, dtype=torch.int64)
-            optimizer.zero_grad()
-            prediction = model(x)
-            loss = criterion(prediction, y)
-            epoch_accuracy = get_accuracy(prediction, y)
-            
-            loss.backward()
-            optimizer.step()
-            
-            epoch_loss += loss.item()
-            epoch_steps += 1
-
-        # print status onto terminal and log file
-        print('Epoch: [%d/%d] | Loss: %.3f | Accuracy: %.3f' % (epoch+1,
-                                                                epochs,
-                                                                epoch_loss,
-                                                                epoch_accuracy))
-
-        logging.info('Epoch: [%d/%d] | Loss: %.3f | Accuracy: %.3f' % (epoch+1,
-                                                                       epochs,
-                                                                       epoch_loss,
-                                                                       epoch_accuracy))
-        # save model
-        model_file_name = 'linreg-python-' + today + '.pt'
-        torch.save(model.state_dict(), os.path.join(dir_, model_file_name))
-
-        # save Torch Script version
-        c_model = str('linreg-c-' + today + '.pt')
-        example_image, example_boxes, example_labels = next(iter(train_loader))
-        example_image = example_image.to(device)
-        example_boxes = [b.to(device) for b in example_boxes]
-        example_labels = [l.to(device) for l in example_labels]
-
-        traced_script_module = torch.jit.trace(model, example_image)
-        traced_script_module.save(os.path.join(dir_, c_model))
-
+    with open(root_dir + '/pred.cpp', 'w') as f:
+        f.write(output)
 if __name__ == '__main__':
     main()
