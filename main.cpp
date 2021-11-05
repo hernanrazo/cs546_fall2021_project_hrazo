@@ -22,13 +22,12 @@ extern "C" {
  * Compress and decompress each file using each compression library.
  * Write resulting information to a csv file. This includes:
  * 1) the file path
- * 2) file size
- * 3) size of source buffer
- * 4) size of destination buffer
+ * 2) file size 
+ * 3) name of the library used
+ * 4) compression/decompression label
  * 5) time taken to compress in seconds (if applicable)
  * 6) time taken to decompress in seconds (if applicable)
- * 7) compression/decompression label
- * 8) name of the library used
+ * 7) compression ratio (if applicable)
  */
 
 int main(int argc, char *argv[])
@@ -91,11 +90,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
+						<< "zlib"
+						<< "compression"
 						<< timer.get_duration_sec()
 						<< 0
-						<< "compression"
-						<< "zlib"
+						<< 0
 						<< endrow;
 
 					// zlib decompress
@@ -104,11 +103,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
-						<< 0
-						<< timer.get_duration_sec() 
-						<< "decompression"
 						<< "zlib"
+						<< "decompression"
+						<< 0
+						<< timer.get_duration_sec()
+						<< source_size / destination_size
 						<< endrow;
 
 					free(source);
@@ -129,11 +128,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
+						<< "lzo"
+						<< "compression"
 						<< timer.get_duration_sec()
 						<< 0
-						<< "compression"
-						<< "lzo"
+						<< 0
 						<< endrow;
 
 					// lzo decompress
@@ -142,11 +141,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
-						<< 0
-						<< timer.get_duration_sec() 
-						<< "decompression"
 						<< "lzo"
+						<< "decompression"
+						<< 0
+						<< timer.get_duration_sec()
+						<< source_size / destination_size
 						<< endrow;
 					
 					free(source);
@@ -167,11 +166,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
-						<< timer.get_duration_sec() 
-						<< 0
-						<< "compression"
 						<< "zstd"
+						<< "compression"
+						<< timer.get_duration_sec()
+						<< 0
+						<< 0
 						<< endrow;
 
 					// zstd decompress
@@ -180,11 +179,11 @@ int main(int argc, char *argv[])
 					timer.stop();
 					csv << entry.path().c_str()
 						<< source_size
-						<< destination_size
-						<< 0
-						<< timer.get_duration_sec() 
-						<< "decompression"
 						<< "zstd"
+						<< "decompression"
+						<< 0
+						<< timer.get_duration_sec()
+						<< source_size / destination_size
 						<< endrow;
 					
 					free(source);

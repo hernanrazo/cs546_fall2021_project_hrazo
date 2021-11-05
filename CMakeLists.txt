@@ -21,25 +21,9 @@ add_executable(main main.cpp
 	include/lzo_client.h
 	include/zstd_client.h)
 
-add_executable(pred pred.cpp
-	zlib_client.cpp
-	lzo_client.cpp
-	zstd_client.cpp
-	include/time_counter.h
-	include/csvfile.h
-	include/zlib_client.h
-	include/lzo_client.h
-	include/zstd_client.h)
-
-
-target_link_libraries(pred
-	/home/hernanrazo/project/lib/zlib-1.2.11/libz.so
-	/home/hernanrazo/project/lib/lzo-2.10/src/.libs/liblzo2.so
-	/home/hernanrazo/project/lib/zstd-1.0.0/lib/libzstd.so)
-
 target_link_libraries(main
 	/home/hernanrazo/project/lib/zlib-1.2.11/libz.so
 	/home/hernanrazo/project/lib/lzo-2.10/src/.libs/liblzo2.so
 	/home/hernanrazo/project/lib/zstd-1.0.0/lib/libzstd.so)
 
-set_property(TARGET main pred PROPERTY CXX_STANDARD 17)
+set_property(TARGET main PROPERTY CXX_STANDARD 17)

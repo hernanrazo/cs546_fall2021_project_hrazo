@@ -38,7 +38,6 @@ scikit-learn=0.23.2=py38h0573a6f_0
 scipy=1.7.1=py38h292c36d_2
 setuptools=58.0.4=py38h06a4308_0
 six=1.16.0=pyhd3eb1b0_0
-sklearn-porter=0.7.4=pypi_0
 sqlite=3.36.0=hc218d9a_0
 threadpoolctl=2.2.0=pyh0d69192_0
 tk=8.6.11=h1ccaba5_0

@@ -39,10 +39,10 @@ def main():
     # create 1000 of each file
     for i in range(1000):
 
-        print('Creating random txt file ...')
+        print('Creating random txt file ' + str(i+1))
         create_txt(i)
 
-        print('Creating random h5 file ...')
+        print('Creating random h5 file ' + str(i+1))
         create_hd5(i)
 
 if __name__ == '__main__':
