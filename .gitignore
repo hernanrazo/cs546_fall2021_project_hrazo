@@ -66,8 +66,11 @@ test.txt
 *.swp
 *.swo
 
+# other
 data/
 saved_models/
+ml/report.txt
+stress_tests/*.txt
 
 # python 
 .DS_Store

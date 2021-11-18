@@ -7,10 +7,10 @@ blas=1.0=mkl
 bottleneck=1.3.2=py38heb32a55_1
 ca-certificates=2021.10.26=h06a4308_2
 cached-property=1.5.2=py_0
-certifi=2021.10.8=py38h06a4308_0
+certifi=2021.10.8=py38h578d9bd_1
 h5py=3.2.1=py38h6c542dc_0
 hdf5=1.10.6=hb1b8bf9_0
-intel-openmp=2021.3.0=h06a4308_3350
+intel-openmp=2021.4.0=h06a4308_3561
 joblib=1.1.0=pyhd3eb1b0_0
 ld_impl_linux-64=2.35.1=h7274673_9
 libffi=3.3=he6710b0_2
@@ -19,11 +19,12 @@ libgfortran-ng=7.5.0=ha8ba4b0_17
 libgfortran4=7.5.0=ha8ba4b0_17
 libgomp=9.3.0=h5101ec6_17
 libstdcxx-ng=9.3.0=hd4cf53a_17
-mkl=2021.3.0=h06a4308_520
+lzo=2.10=h516909a_1000
+mkl=2021.4.0=h06a4308_640
 mkl-service=2.4.0=py38h7f8727e_0
 mkl_fft=1.3.1=py38hd3c417c_0
 mkl_random=1.2.2=py38h51133e4_0
-ncurses=6.2=he6710b0_1
+ncurses=6.3=h7f8727e_2
 numexpr=2.7.3=py38h22e1b3c_1
 numpy=1.21.2=py38h20f2e39_0
 numpy-base=1.21.2=py38h79a1101_0
@@ -32,6 +33,8 @@ pandas=1.3.3=py38h8c16a72_0
 pip=21.2.4=py38h06a4308_0
 python=3.8.12=h12debd9_0
 python-dateutil=2.8.2=pyhd3eb1b0_0
+python-lzo=1.12=py38h86e1cee_1003
+python_abi=3.8=2_cp38
 pytz=2021.3=pyhd3eb1b0_0
 readline=8.1=h27cfd23_0
 scikit-learn=0.23.2=py38h0573a6f_0
@@ -44,3 +47,4 @@ tk=8.6.11=h1ccaba5_0
 wheel=0.37.0=pyhd3eb1b0_1
 xz=5.2.5=h7b6447c_0
 zlib=1.2.11=h7b6447c_3
+zstd=1.5.0.2=pypi_0
