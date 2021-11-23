@@ -1,3 +1,10 @@
+#ifndef ENUMERATIONS_H
+#define ENUMERATIONS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //---------------| USER CHOICES |-----------------
 
 #define NUM_LIBRARIES 3
@@ -19,3 +26,7 @@ enum class PathType
 {
 	NONE, FILE, DIRECTORY
 };
+#ifdef __cplusplus
+}
+#endif
+#endif

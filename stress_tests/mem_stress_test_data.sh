@@ -1,4 +1,5 @@
 #!/bin/bash
 
-#sadf -d -- -u -r 2 5 | grep -v Average | grep -v Linux  >> stress_test.csv
-sar -r -u 1 5 >> mem_stress_test_btrfs.txt
+# use sar to get the memory utilization readings.
+# write results to a txt file (change the file name as needed)
+sar -r 1 60 >> /home/hernanrazo/project/stress_tests/mem/userspace/mem_zstd8.txt

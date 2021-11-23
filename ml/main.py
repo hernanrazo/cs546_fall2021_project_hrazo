@@ -10,6 +10,12 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
+'''
+Performance test for trained model. Measures the total times that each compression
+library was used in general and for each file type. Also measures the average seconds
+taken to compress using each library. Results are printed to a txt file.
+'''
+
 # constant bandwidth value.
 # derived from measuring average time taken to write 1 GB to memory
 BANDWIDTH = 1438.30 #MiB/s
@@ -45,17 +51,17 @@ def get_file_type(filename: str) -> int:
 def main():
     
     # general counters
-    no_comp_counter = 0
+    none_counter = 0
     zlib_counter = 0
     lzo_counter = 0
     zstd_counter = 0
 
     # file type counters
     # count number of times a specific file type was used on a specific compression library
-    txt_no_comp = 0
-    jpg_no_comp = 0
-    h5_no_comp = 0
-    pdf_no_comp = 0
+    txt_none = 0
+    jpg_none = 0
+    h5_none = 0
+    pdf_none = 0
     
     txt_zlib = 0
     jpg_zlib = 0
@@ -89,7 +95,7 @@ def main():
         for file in files:
             print('Currently on: ' + os.path.join(root, file))
 
-            # get size (in bytes) and type of current file
+            # get size (in bytes) and file type of current file
             file_size = os.path.getsize(os.path.join(root, file))
             file_type = get_file_type(os.path.join(root, file))
 
@@ -103,21 +109,20 @@ def main():
             inf_lzo = model.predict(lzo_vals)
             inf_zstd = model.predict(zstd_vals)
 
-            # calculate resulting write times for all libraries and when no
-            # compression is used
-            no_comp = get_write_time(0, file_size, 1)
+            # calculate resulting write times for all libraries and when no compression is used
+            none = get_write_time(0, file_size, 1)
             zlib_time = get_write_time(inf_zlib[0][0], file_size, inf_zlib[0][2])
             lzo_time = get_write_time(inf_lzo[0][0], file_size, inf_lzo[0][2])
             zstd_time = get_write_time(inf_zstd[0][0], file_size, inf_zstd[0][2])
 
             # this is optimizing for fastest write time, so get the library that is fastest
-            if no_comp < zlib_time and no_comp < lzo_time and no_comp < zstd_time:
-                fastest = 'no_comp'
-            elif zlib_time < no_comp and zlib_time < lzo_time and zlib_time < zstd_time:
+            if none < zlib_time and none < lzo_time and none < zstd_time:
+                fastest = 'none'
+            elif zlib_time < none and zlib_time < lzo_time and zlib_time < zstd_time:
                 fastest = 'zlib'
-            elif lzo_time < no_comp and lzo_time < zlib_time and lzo_time < zstd_time:
+            elif lzo_time < none and lzo_time < zlib_time and lzo_time < zstd_time:
                 fastest = 'lzo'
-            elif zstd_time < no_comp and zstd_time < lzo_time and zstd_time < zlib_time:
+            elif zstd_time < none and zstd_time < lzo_time and zstd_time < zlib_time:
                 fastest = 'zstd'
 
             # now actually compress using the fastest option
@@ -125,20 +130,18 @@ def main():
             source_size = input.read()
             input.close()
 
-            if fastest == 'no_comp':
+            if fastest == 'none':
                 print('No compression applied')
-                no_comp_counter += 1
+                none_counter += 1
 
                 if file_type == 0:
-                    txt_no_comp += 1
+                    txt_none += 1
                 elif file_type == 1:
-                    jpg_no_comp += 1
+                    jpg_none += 1
                 elif file_type == 2:
-                    h5_no_comp += 1
+                    h5_none += 1
                 else: # pdf or PDF
-                    pdf_no_comp += 1
-                    
-
+                    pdf_none += 1
 
             elif fastest == 'zlib':
                 print('Compression using zlib')
@@ -157,7 +160,6 @@ def main():
                     h5_zlib += 1
                 else: # pdf or PDF
                     pdf_zlib += 1
-
 
             elif fastest == 'lzo':
                 print('Compression using lzo')
@@ -200,15 +202,15 @@ def main():
     print('\nPreparing report ...')
     f = open('report.txt', 'a')
     f.write('Performance results of trained model\n')
-    f.write('\nTotal times no compression used: ' + str(no_comp_counter))
+    f.write('\nTotal times no compression used: ' + str(none_counter))
     f.write('\nTotal times zlib used: ' +  str(zlib_counter))
     f.write('\nTotal times lzo used: ' + str(lzo_counter))
     f.write('\nTotal times zstd used: ' + str(zstd_counter))
 
-    f.write('\n\nTotal times txt files used no compression: ' + str(txt_no_comp))
-    f.write('\nTotal times jpg files used no compression: ' + str(jpg_no_comp))
-    f.write('\nTotal times h5 files used no compression: ' + str(h5_no_comp))
-    f.write('\nTotal times pdf files used no compression: ' + str(pdf_no_comp))
+    f.write('\n\nTotal times txt files used no compression: ' + str(txt_none))
+    f.write('\nTotal times jpg files used no compression: ' + str(jpg_none))
+    f.write('\nTotal times h5 files used no compression: ' + str(h5_none))
+    f.write('\nTotal times pdf files used no compression: ' + str(pdf_none))
 
     f.write('\n\nTotal times txt files used zlib: ' + str(txt_zlib))
     f.write('\nTotal times jpg files used zlib: ' + str(jpg_zlib))
@@ -225,9 +227,9 @@ def main():
     f.write('\nTotal times h5 files used zstd: ' + str(h5_zstd))
     f.write('\nTotal times pdf files used zstd: ' + str(pdf_zstd))
 
-    f.write('\n\nAvg time (seconds) to compress for zlib: ' + str(get_avg(zlib_times)))
-    f.write('\nAvg time (seconds) to compress for lzo: ' + str(get_avg(lzo_times)))
-    f.write('\nAvg time (seconds) to compress for zstd: ' + str(get_avg(zstd_times)))
+    f.write('\n\nAvg time (seconds) to compress for zlib: ' + str('{:10f}'.format(get_avg(zlib_times))))
+    f.write('\nAvg time (seconds) to compress for lzo: ' + str('{:10f}'.format(get_avg(lzo_times))))
+    f.write('\nAvg time (seconds) to compress for zstd: ' + str('{:10f}'.format(get_avg(zstd_times))))
     f.close()
     print('done.')
 

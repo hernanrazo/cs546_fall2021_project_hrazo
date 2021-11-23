@@ -71,6 +71,10 @@ data/
 saved_models/
 ml/report.txt
 stress_tests/*.txt
+lib/mpich-build
+stress_tests/mem/
+stress_tests/cpu/
+stress_tests/results
 
 # python 
 .DS_Store
