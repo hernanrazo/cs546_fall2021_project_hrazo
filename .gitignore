@@ -74,7 +74,9 @@ stress_tests/*.txt
 lib/mpich-build
 stress_tests/mem/
 stress_tests/cpu/
-stress_tests/results
+stress_tests/results/
+stress_tests/plots/
+stress_tests/test.py
 
 # python 
 .DS_Store
