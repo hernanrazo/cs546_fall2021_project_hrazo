@@ -125,10 +125,10 @@ def main():
                 fastest = 'zstd'
 
             # now actually compress using the fastest option
-            #input = open(os.path.join(root, file), 'rb')
-            with open(os.path.join(root, file), 'rb') as input:
-                source_size = input.read()
-
+            input = open(os.path.join(root, file), 'rb')
+            source_size = input.read()
+            input.close()
+            
             if fastest == 'none':
                 print('No compression applied')
                 none_counter += 1
@@ -145,7 +145,6 @@ def main():
             elif fastest == 'zlib':
                 print('Compression using zlib')
                 start = time.time()
-                print(source_size)
                 zlib.compress(source_size, 9)
                 end = time.time()
                 
