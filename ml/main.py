@@ -1,5 +1,4 @@
 import os
-import sys
 import pickle
 import time
 import numpy as np
@@ -126,9 +125,9 @@ def main():
                 fastest = 'zstd'
 
             # now actually compress using the fastest option
-            input = open(os.path.join(root, file), 'rb')
-            source_size = input.read()
-            input.close()
+            #input = open(os.path.join(root, file), 'rb')
+            with open(os.path.join(root, file), 'rb') as input:
+                source_size = input.read()
 
             if fastest == 'none':
                 print('No compression applied')
@@ -145,9 +144,11 @@ def main():
 
             elif fastest == 'zlib':
                 print('Compression using zlib')
-                start = time.perf_counter()
+                start = time.time()
+                print(source_size)
                 zlib.compress(source_size, 9)
-                end = time.perf_counter()
+                end = time.time()
+                
                 zlib_counter += 1
                 timer = end - start
                 zlib_times.append(timer)
@@ -163,9 +164,10 @@ def main():
 
             elif fastest == 'lzo':
                 print('Compression using lzo')
-                start = time.perf_counter()
+                start = time.time()
                 lzo.compress(source_size)
-                end = time.perf_counter()
+                end = time.time()
+                
                 lzo_counter += 1
                 timer = end - start
                 lzo_times.append(timer)
@@ -181,9 +183,10 @@ def main():
 
             elif fastest == 'zstd':
                 print('Compression using zstd')
-                start = time.perf_counter()
+                start = time.time()
                 zstd.compress(source_size, 1)
-                end = time.perf_counter()
+                end = time.time()
+                
                 zstd_counter += 1
                 timer = end - start
                 zstd_times.append(timer)
@@ -197,6 +200,8 @@ def main():
                 else: # pdf or PDF
                     pdf_zstd += 1
 
+            input.close()
+    
 
     # write final report
     print('\nPreparing report ...')
@@ -229,10 +234,9 @@ def main():
 
     f.write('\n\nAvg time (seconds) to compress for zlib: ' + str('{:10f}'.format(get_avg(zlib_times))))
     f.write('\nAvg time (seconds) to compress for lzo: ' + str('{:10f}'.format(get_avg(lzo_times))))
-    f.write('\nAvg time (seconds) to compress for zstd: ' + str('{:10f}'.format(get_avg(zstd_times))))
+    f.write('\nAvg time (seconds) to compress for zstd: ' + str('{:10f}\n'.format(get_avg(zstd_times))))
     f.close()
     print('done.')
-
 
 if __name__ == '__main__':
     main()
