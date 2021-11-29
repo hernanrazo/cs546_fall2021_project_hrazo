@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
 sys.path.append('../')
 from utils.utils import create_dir
 
@@ -52,12 +52,15 @@ def main():
     # split training and testing data
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=0, shuffle=True)
     
-    grad_model = MultiOutputRegressor(GradientBoostingRegressor(learning_rate=0.1, n_estimators=200, max_depth=2)).fit(x_train, y_train)
-    grad_pred = grad_model.predict(x_test)
-    print('grad: ' + str(mean_squared_error(y_test, grad_pred)))
+    model = MultiOutputRegressor(GradientBoostingRegressor(learning_rate=0.1, n_estimators=200, max_depth=2)).fit(x_train, y_train)
+    pred = model.predict(x_test)
+    print('grad: ' + str(mean_squared_error(y_test, pred)))
+    print('r^2 value: ' + str(r2_score(y_test, pred)))
+
+
 
     # save python model
-    pickle.dump(grad_model, open(dir_ + '/gbr-python.sav', 'wb'))
+    pickle.dump(model, open(dir_ + '/gbr-python.sav', 'wb'))
     
 if __name__ == '__main__':
     main()
